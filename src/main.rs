@@ -13,7 +13,11 @@ use std::fs::File;
 use std::io::stdout;
 
 fn main() -> Result<()> {
-    let file_path = "/home/radium/ser/follows/kaxel-relive/refs/assets/latest_gl.xml";
+    /**
+     * TEMPORARY
+     * TODO: replace with user provided path
+     * */
+    let file_path = "./refs/assets/latest_gl.xml";
     let file = File::open(file_path)?;
 
     let spec = spec::build_spec(file, SpecOptions{ 
