@@ -105,6 +105,7 @@ impl<'a, R: Read> SpecParse<'a, R> {
             match self.reader.next()? {
                 XmlEvent::StartElement { name, .. } => match name.local_name.as_str() {
                     "enums" => self.elem_enums()?,
+                    "types" => self.elem_types()?,
                     _ => (),
                 },
                 XmlEvent::EndDocument => break,
@@ -115,14 +116,20 @@ impl<'a, R: Read> SpecParse<'a, R> {
         Ok(())
     }
 
-    fn is_required_api(&self, api: &str) -> bool {
-        match (api, &self.opts.api) {
-            ("", _) => true,
-            ("gl", Api::OpenGL) => true,
-            ("gles1" | "gles2", Api::OpenGLES) => true,
-            ("glsc2", Api::OpenGLSC) => true,
-            _ => false,
-        }
+    fn api_check(&self, attributes: &Vec<OwnedAttribute>) -> bool {
+        // Skip if the element is useless i.e is of a different api
+        // If the "api" attibute is present, then we match it with opts.api,
+        // otherwise it is implcitly valid for any api.
+
+        getattr(&attributes, "api")
+            .map(|api| match (&api.value[..], &self.opts.api) {
+                ("", _) => true,
+                ("gl", Api::OpenGL) => true,
+                ("gles1" | "gles2", Api::OpenGLES) => true,
+                ("glsc2", Api::OpenGLSC) => true,
+                _ => false,
+            })
+            .unwrap_or(true)
     }
 
     fn elem_enums(&mut self) -> Result<()> {
@@ -131,14 +138,8 @@ impl<'a, R: Read> SpecParse<'a, R> {
                 XmlEvent::StartElement {
                     name, attributes, ..
                 } if match_name(&name, "enum") => {
-                    // Skip if the enumarant is useless i.e is of a different api
-                    // If the "api" attibute is present, then we match it with opts.api,
-                    // otherwise it is implcitly valid for any api.
-                    let api_check = getattr(&attributes, "api")
-                        .map(|v| self.is_required_api(&v.value[..]))
-                        .unwrap_or(true);
 
-                    if !api_check {
+                    if !self.api_check(&attributes) {
                         continue;
                     }
 
@@ -158,15 +159,13 @@ impl<'a, R: Read> SpecParse<'a, R> {
 
                     let enum_id = name.clone();
 
-                    let enumerant = Enumerant {
+                    // Add it to the list
+                    self.spec.enums_list.push(Enumerant {
                         name,
                         value,
                         alias,
                         ty: enum_ty,
-                    };
-
-                    // Add it to the list
-                    self.spec.enums_list.push(enumerant);
+                    });
 
                     if let Some(group_value) = getattr(&attributes, "group").map(|v| &v.value[..]) {
                         let group_list: Vec<&str> = group_value.split(',').map(str::trim).collect();
