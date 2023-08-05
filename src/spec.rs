@@ -61,7 +61,8 @@ pub struct EnumerantId(pub String);
 
 pub struct Enumerant {
     pub name: EnumerantId,
-    pub value: i128,
+    // pub value: i128,
+    pub value: num_parse::Constant,
     pub alias: Option<String>,
     pub ty: Option<String>,
 }
@@ -98,14 +99,13 @@ impl<'a, R: Read> SpecParse<'a, R> {
         }
 
         // ...
-        // Here the parser is inside the root <registry> tag
+        // Here the parser is now inside the root <registry> tag
         // ...
 
         loop {
             match self.reader.next()? {
                 XmlEvent::StartElement { name, .. } => match name.local_name.as_str() {
                     "enums" => self.elem_enums()?,
-                    "types" => self.elem_types()?,
                     _ => (),
                 },
                 XmlEvent::EndDocument => break,
@@ -150,8 +150,9 @@ impl<'a, R: Read> SpecParse<'a, R> {
                     let value = getattr(&attributes, "value")
                         .ok_or(anyhow!("<enum />: Attribute \"value\" not found."))
                         .and_then(|v| {
-                            num_parse::parse_int(&v.value) /* ... */
-                                .map_err(|e| anyhow!("{:?}", e))
+                            // num_parse::parse_int(&v.value) /* ... */
+                                // .map_err(|e| anyhow!("{:?}", e))
+                            num_parse::create_constant(&v.value)
                         })?;
 
                     let alias = getattr(&attributes, "alias").map(|v| &v.value).cloned();
