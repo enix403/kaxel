@@ -1,7 +1,7 @@
 use anyhow::{anyhow, bail, ensure, Result};
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::{self, BufReader, Read};
+use std::io::{BufReader, Read};
 use xml::attribute::OwnedAttribute;
 use xml::name::OwnedName;
 use xml::reader::XmlEvent;
@@ -66,8 +66,8 @@ pub struct Enumerant {
 }
 
 pub struct EnumerantGroup {
-    name: Option<String>, /* None for an unnamed group */
-    enums: Vec<EnumerantId>,
+    pub name: Option<String>, /* None for an unnamed group */
+    pub enums: Vec<EnumerantId>,
 }
 
 struct SpecParse<'a, R: Read> {
@@ -136,7 +136,6 @@ impl<'a, R: Read> SpecParse<'a, R> {
                 XmlEvent::StartElement {
                     name, attributes, ..
                 } if match_name(&name, "enum") => {
-
                     if !self.api_check(&attributes) {
                         continue;
                     }
@@ -147,9 +146,7 @@ impl<'a, R: Read> SpecParse<'a, R> {
 
                     let value = getattr(&attributes, "value")
                         .ok_or(anyhow!("<enum />: Attribute \"value\" not found."))
-                        .map(|v| {
-                            values::make_constant(&v.value)
-                        })?;
+                        .map(|v| values::make_constant(&v.value))?;
 
                     let alias = getattr(&attributes, "alias").map(|v| &v.value).cloned();
                     // let enum_ty = getattr(&attributes, "type").map(|v| &v.value).cloned(); // Not needed now

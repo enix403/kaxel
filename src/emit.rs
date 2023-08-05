@@ -1,11 +1,9 @@
 use crate::spec::Spec;
-use crate::values::Constant;
 use anyhow::Result;
 use std::format;
-use std::fs::{self, File, OpenOptions};
+use std::fs::{self, OpenOptions};
 use std::io::Write;
 use std::path::Path;
-use std::write;
 use std::writeln;
 
 pub trait Emitter {
@@ -21,7 +19,13 @@ impl<'a> Emitter for CppEmitter<'a> {
         let root_folder = self.outdir.join("kaxel");
 
         if !root_folder.is_dir() {
-            fs::create_dir_all(&root_folder);
+            fs::create_dir_all(&root_folder).unwrap_or_else(|e| {
+                panic!(
+                    "Failed to create missing output directory \"{:?}\": {}",
+                    root_folder.as_path(),
+                    e
+                )
+            });
         }
 
         let mut header_file = OpenOptions::new()
@@ -30,7 +34,7 @@ impl<'a> Emitter for CppEmitter<'a> {
             .open(root_folder.join("gl.h"))
             .expect("Failed to open header file \"gl.h\"");
 
-        writeln!(&mut header_file, "#include <cstdint>\n");
+        writeln!(&mut header_file, "#include <cstdint>\n").expect("write!() failed");
 
         self.emit_types(&mut header_file);
         self.emit_enums(spec, &mut header_file)?;
@@ -135,7 +139,8 @@ typedef GLintptr GLvdpauSurfaceNV;
 
 typedef void (*GLVULKANPROCNV)(void);
             "#
-        );
+        )
+        .expect("write!() failed");
     }
 
     fn emit_enums<W: Write>(&self, spec: &Spec, writer: &mut W) -> Result<()> {

@@ -1,6 +1,3 @@
-use anyhow::{bail, Result};
-use std::num::ParseIntError;
-
 #[derive(Debug, Clone)]
 pub struct IntegralType {
     pub bitwidth: u32,
@@ -43,7 +40,7 @@ pub fn make_constant(val: &str) -> Constant {
     let integral = u64::from_str_radix(&val, radix)
         .unwrap_or_else(|e| panic!("Failed to parse integer {}: {:?}", val, e));
 
-    let mut bitwidth = match (signed, integral) {
+    let bitwidth = match (signed, integral) {
         (false, x) if x <= (u8::MAX as u64) => 8,
         (false, x) if x <= (u32::MAX as u64) => 32,
         (false, x) if x <= (u64::MAX as u64) => 64,
