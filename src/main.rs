@@ -17,8 +17,8 @@ fn main() -> Result<()> {
      * TEMPORARY
      * TODO: replace with user provided path
      * */
-    let file_path = "./refs/assets/latest_gl.xml";
-    let file = File::open(file_path)?;
+    let file_path = "./refs/api_specs_latest/gl.xml";
+    let file = File::open(file_path).expect("Failed to open gl.xml file");
 
     let spec = spec::build_spec(file, SpecOptions{ 
         api: spec::Api::OpenGL,
