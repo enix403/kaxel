@@ -7,7 +7,7 @@ use xml::name::OwnedName;
 use xml::reader::XmlEvent;
 use xml::{EventReader, ParserConfig};
 
-use crate::num_parse;
+use crate::values;
 
 #[derive(Default)]
 pub struct Spec {
@@ -61,10 +61,8 @@ pub struct EnumerantId(pub String);
 
 pub struct Enumerant {
     pub name: EnumerantId,
-    // pub value: i128,
-    pub value: num_parse::Constant,
+    pub value: values::Constant,
     pub alias: Option<String>,
-    pub ty: Option<String>,
 }
 
 pub struct EnumerantGroup {
@@ -149,14 +147,12 @@ impl<'a, R: Read> SpecParse<'a, R> {
 
                     let value = getattr(&attributes, "value")
                         .ok_or(anyhow!("<enum />: Attribute \"value\" not found."))
-                        .and_then(|v| {
-                            // num_parse::parse_int(&v.value) /* ... */
-                                // .map_err(|e| anyhow!("{:?}", e))
-                            num_parse::create_constant(&v.value)
+                        .map(|v| {
+                            values::make_constant(&v.value)
                         })?;
 
                     let alias = getattr(&attributes, "alias").map(|v| &v.value).cloned();
-                    let enum_ty = getattr(&attributes, "type").map(|v| &v.value).cloned();
+                    // let enum_ty = getattr(&attributes, "type").map(|v| &v.value).cloned(); // Not needed now
 
                     let enum_id = name.clone();
 
@@ -165,7 +161,7 @@ impl<'a, R: Read> SpecParse<'a, R> {
                         name,
                         value,
                         alias,
-                        ty: enum_ty,
+                        // ty: enum_ty,
                     });
 
                     if let Some(group_value) = getattr(&attributes, "group").map(|v| &v.value[..]) {

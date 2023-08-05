@@ -1,4 +1,4 @@
-use crate::num_parse::Constant;
+use crate::values::Constant;
 use crate::spec::Spec;
 use anyhow::Result;
 use std::fs::{self, File, OpenOptions};
@@ -43,7 +43,7 @@ impl<'a> CppEmitter<'a> {
         for enumerant in spec.enums_list.iter() {
             let cnt = &enumerant.value;
 
-            let datatype = match (cnt.signed, cnt.bitwidth) {
+            let datatype = match (cnt.ty.signed, cnt.ty.bitwidth) {
                 (false, 8) => "uint8_t",
                 (false, 32) => "uint32_t",
                 (false, 64) => "uint64_t",
@@ -55,7 +55,7 @@ impl<'a> CppEmitter<'a> {
                 _ => "auto",
             };
 
-            let value = if cnt.signed {
+            let value = if cnt.ty.signed {
                 format!("-{}", cnt.value)
             } else {
                 format!("0x{:X}", cnt.value)
